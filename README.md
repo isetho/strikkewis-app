@@ -1,8 +1,10 @@
 🧶 Strikkewis – A New Way to Knit
+
 Welcome to Strikkewis, a modern web app that transforms the knitting pattern experience for both designers and knitters.
 This project is currently in active development as a Minimum Lovable Product (MLP)!
 
 🚀 What is Strikkewis?
+
 Strikkewis is a digital tool where:
 
 Designers can create dynamic, interactive knitting patterns tailored to different sizes, gauges, and yarns.
