@@ -53,10 +53,12 @@ The app should be running on http://localhost:5173/.
 - Deployment to live environment (planned)
 
 🧡 About the Creator
+
 Strikkewis is created with love for knitting, tech, and better user experiences by Iselin Wisnes.
 The goal: To make knitting patterns easier, more motivating, and more accessible in the digital world!
 
 📬 Contact
+
 If you're interested in this project, feel free to reach out via iselin@wisnesstrikkeri.no!
 
 🎉 Let's make knitting more fun and accessible together!
