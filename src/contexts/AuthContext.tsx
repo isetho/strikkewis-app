@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { User } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
-type UserRole = 'designer' | 'knitter' | null;
+type UserRole = 'designer' | 'knitter' | 'both' | null;
 
 interface AuthContextType {
   isLoading: boolean;
@@ -18,121 +18,52 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const navigate = useNavigate();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
-  const [userRole, setUserRole] = useState<UserRole>(null);
+  // Always authenticated
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  // Default user with both roles
+  const defaultUser: User = {
+    id: 'default-user',
+    app_metadata: {},
+    user_metadata: { role: 'both' },
+    aud: 'authenticated',
+    created_at: new Date().toISOString(),
+    email: 'default@example.com',
+    phone: '',
+    role: '',
+    updated_at: new Date().toISOString(),
+    confirmed_at: new Date().toISOString(),
+    last_sign_in_at: new Date().toISOString(),
+    email_confirmed_at: new Date().toISOString(),
+    phone_confirmed_at: undefined,
+    factors: [],
+    identities: [],
+    recovery_sent_at: undefined,
+    confirmation_sent_at: new Date().toISOString(),
+    email_change_sent_at: undefined,
+    invited_at: undefined,
+    action_link: undefined,
+  };
+  const [user, setUser] = useState<User | null>(defaultUser);
+  const [userRole, setUserRole] = useState<UserRole>('both');
 
-  // Get role from user metadata first, then fallback to database
+  // Simplified getUserRole that always returns 'both'
   const getUserRole = async (user: User): Promise<UserRole> => {
-    // First check metadata
-    const metadataRole = user.user_metadata?.role as UserRole;
-    if (metadataRole) {
-      return metadataRole;
-    }
-
-    // Fallback to database lookup
-    try {
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('roles(name)')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (error) throw error;
-      return (data?.roles?.name as UserRole) || null;
-    } catch (error) {
-      console.error('Error fetching user role:', error);
-      return null;
-    }
+    return 'both';
   };
 
   const signUp = async (email: string, password: string, role: UserRole) => {
-    const { data: { user }, error } = await supabase.auth.signUp({
-      email,
-      password
-    });
-
-    if (error) throw error;
-    
-    if (!user) {
-      throw new Error('Failed to create user');
-    }
-    
-    // Update user metadata with role after signup
-    const { error: updateError } = await supabase.auth.updateUser({
-      data: { role }
-    });
-
-    if (updateError) {
-      throw updateError;
-    }
-    
-    // Don't auto sign in - let user verify email first
+    // No-op - always succeeds
     return;
   };
 
   const signIn = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-    if (error) {
-      throw new Error(error.message);
-    }
-    
-    if (data.user) {
-      const role = await getUserRole(data.user);
-      navigate(role === 'designer' ? '/designer' : '/knitter');
-    }
+    // No-op - always succeeds
+    navigate('/');
   };
 
-  useEffect(() => {
-    // Get initial session
-    const initSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        setIsAuthenticated(!!session);
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          const role = await getUserRole(session.user);
-          setUserRole(role);
-        }
-      } catch (error) {
-        console.error('Error initializing auth session:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    initSession();
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      const previousAuth = isAuthenticated;
-      setIsAuthenticated(!!session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        getUserRole(session.user).then(role => {
-          setUserRole(role);
-        });
-      } else {
-        setUserRole(null);
-        navigate('/');
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
   const logout = async (): Promise<void> => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
-    setIsAuthenticated(false);
-    setUser(null);
-    setUserRole(null);
+    // No-op - does nothing
   };
 
   return (

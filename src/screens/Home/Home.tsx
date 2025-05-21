@@ -20,18 +20,18 @@ export const Home = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button
-                onClick={() => navigate('/login')}
+                onClick={() => navigate('/designer-projects')}
                 className="min-w-[200px]"
               >
-                For strikkedesignere
+                Se designerprosjekter
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
               <Button
-                onClick={() => navigate('/login')}
+                onClick={() => navigate('/knitter-projects')}
                 variant="outline"
                 className="min-w-[200px]"
               >
-                For strikkere
+                Se strikkeprosjekter
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
@@ -137,18 +137,18 @@ export const Home = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button
-              onClick={() => navigate('/login')}
+              onClick={() => navigate('/designer-projects')}
               className="min-w-[200px]"
             >
-              For strikkedesignere
+              Se designerprosjekter
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
             <Button
-              onClick={() => navigate('/login')}
+              onClick={() => navigate('/knitter-projects')}
               variant="outline"
               className="min-w-[200px]"
             >
-              For strikkere
+              Se strikkeprosjekter
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </div>
