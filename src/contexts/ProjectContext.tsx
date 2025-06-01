@@ -197,6 +197,10 @@ export interface Project {
       value: number;
     }[];
   }[];
+  originalFile?: {
+    type: string;
+    url: string;
+  };
 }
 
 interface ProjectContextType {
