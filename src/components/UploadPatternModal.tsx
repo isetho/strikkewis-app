@@ -31,11 +31,7 @@ export const UploadPatternModal: React.FC = () => {
         url: fileUrl
       });
 
-      addProject({
-        id: uuidv4(),
-        ...projectData
-      });
-
+      addProject(projectData);
       setIsOpen(false);
     } catch (error) {
       console.error('Error processing file:', error);
