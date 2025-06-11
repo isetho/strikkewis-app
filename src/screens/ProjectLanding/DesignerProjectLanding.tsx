@@ -46,6 +46,37 @@ export const DesignerProjectLanding = ({ project }: Props) => {
     alert('Magic link copied to clipboard!');
   };
 
+  const replaceStitchCounts = (text: string, sizeSpecificValues?: Array<{
+    placeholder: string;
+    values: Record<string, number>;
+  }>, stitchCounts?: Record<string, Record<string, number>>) => {
+    if (!project.selectedSize) return text;
+    
+    let result = text;
+
+    // Handle imported pattern format (sizeSpecificValues)
+    if (sizeSpecificValues) {
+      sizeSpecificValues.forEach(({ placeholder, values }) => {
+        const value = values[project.selectedSize];
+        if (value !== undefined) {
+          result = result.replace(placeholder, value.toString());
+        }
+      });
+    }
+
+    // Handle manually created pattern format (stitchCounts)
+    if (stitchCounts) {
+      Object.entries(stitchCounts).forEach(([name, counts]) => {
+        const count = counts[project.selectedSize];
+        if (count !== undefined) {
+          result = result.replace(new RegExp(`\\[${name}\\]`, 'g'), count.toString());
+        }
+      });
+    }
+    
+    return result;
+  };
+
   return (
     <div className="min-h-screen bg-[#fff7ff] p-4 sm:p-6 md:p-8">
       <div className="max-w-[640px] mx-auto">
@@ -100,29 +131,6 @@ export const DesignerProjectLanding = ({ project }: Props) => {
 
         <div className="bg-[#FFFFF0] rounded-xl p-8 space-y-8">
           <div>
-            <h2 className="font-text-xl text-black mb-4">Om oppskriften</h2>
-            <p className="text-gray-600">{project.description}</p>
-          </div>
-          
-          <div className="flex flex-wrap gap-2">
-            <Badge 
-              className={`rounded-[100px] px-2 py-1 ${
-                project.difficulty === "Nybegynner" ? "bg-[#C7F7AE]" :
-                project.difficulty === "Middels" ? "bg-[#C8EBFD]" :
-                "bg-[#FEE9FE]"
-              } text-neutralsblack`}
-            >
-              {project.difficulty}
-            </Badge>
-            
-            <Badge 
-              className="bg-[#ccc3ff] text-neutralsblack rounded-[100px] px-2 py-1"
-            >
-              {project.isPublished ? 'Publisert' : 'Kladd'}
-            </Badge>
-          </div>
-
-          <div>
             <h2 className="font-text-xl text-black mb-4">Tilgjengelige størrelser</h2>
             <div className="grid grid-cols-2 gap-2">
               {project.availableSizes.map((size) => (
@@ -155,10 +163,6 @@ export const DesignerProjectLanding = ({ project }: Props) => {
                 label="Pinner"
                 value={project.suggestedNeedles?.length ? project.suggestedNeedles.join(', ') : null}
               />
-              <SpecificationRow 
-                label="Teknikker"
-                value={project.techniques?.length ? project.techniques.join(', ') : null}
-              />
             </div>
           </div>
 
@@ -171,7 +175,9 @@ export const DesignerProjectLanding = ({ project }: Props) => {
                     {index + 1}
                   </div>
                   <h3 className="font-text-base mb-2">{step.title}</h3>
-                  <p className="text-gray-600 text-sm line-clamp-2">{step.description}</p>
+                  <p className="text-gray-600 text-sm line-clamp-2">
+                    {replaceStitchCounts(step.description, step.sizeSpecificValues, step.stitchCounts)}
+                  </p>
                   {step.stitchCounts && Object.keys(step.stitchCounts).length > 0 && (
                     <div className="mt-2 text-xs text-gray-500">
                       {Object.entries(step.stitchCounts).map(([name, counts]) => (
@@ -188,34 +194,33 @@ export const DesignerProjectLanding = ({ project }: Props) => {
             </div>
           </div>
           
-          <div className="border-t border-gray-200 pt-8">
+          <div>
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button
-                  variant="outline"
-                  className="w-full text-red-500 hover:text-red-600 hover:bg-red-50 border-red-200 hover:border-red-300"
+                  variant="destructive"
+                  className="w-full sm:w-auto"
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
-                  Slett oppskrift
+                  Fjern oppskrift
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Er du sikker på at du vil slette denne oppskriften?</AlertDialogTitle>
+                  <AlertDialogTitle>Er du sikker?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Dette vil permanent slette oppskriften og all tilhørende informasjon. Denne handlingen kan ikke angres.
+                    Dette vil permanent fjerne oppskriften fra dine prosjekter. Denne handlingen kan ikke angres.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Avbryt</AlertDialogCancel>
                   <AlertDialogAction
-                    className="bg-red-500 hover:bg-red-600 focus:ring-red-500"
                     onClick={() => {
                       deleteProject(project.id);
                       navigate('/designer-projects');
                     }}
                   >
-                    Slett oppskrift
+                    Fjern
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>

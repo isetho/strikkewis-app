@@ -62,28 +62,6 @@ export const DesignerProjects = (): JSX.Element => {
             </h3>
             <ArrowRight className="w-5 h-5" />
           </div>
-
-          <p className="font-text-base text-grey-900 text-[length:var(--text-base-font-size)] tracking-[var(--text-base-letter-spacing)] leading-[var(--text-base-line-height)] [font-style:var(--text-base-font-style)]">
-            {project.description}
-          </p>
-          
-          <div className="flex flex-wrap gap-2">
-            <Badge 
-              className={`rounded-[100px] px-2 py-1 font-text-xs text-[length:var(--text-xs-font-size)] tracking-[var(--text-xs-letter-spacing)] leading-[var(--text-xs-line-height)] [font-style:var(--text-xs-font-style)] ${
-                project.difficulty === "Nybegynner" ? "bg-[#C7F7AE] text-neutralsblack" :
-                project.difficulty === "Middels" ? "bg-[#C8EBFD] text-neutralsblack" :
-                "bg-[#FEE9FE] text-neutralsblack"
-              }`}
-            >
-              {project.difficulty}
-            </Badge>
-            
-            <Badge 
-              className="bg-[#ccc3ff] text-neutralsblack rounded-[100px] px-2 py-1 font-text-xs text-[length:var(--text-xs-font-size)] tracking-[var(--text-xs-letter-spacing)] leading-[var(--text-xs-line-height)] [font-style:var(--text-xs-font-style)]"
-            >
-              {project.isPublished ? 'Publisert' : 'Kladd'}
-            </Badge>
-          </div>
         </div>
       </CardContent>
     </Card>

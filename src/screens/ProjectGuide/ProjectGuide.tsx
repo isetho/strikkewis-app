@@ -15,22 +15,22 @@ function getYouTubeEmbedUrl(url: string) {
 }
 
 export const ProjectGuide = () => {
-  const [activeStep, setActiveStep] = React.useState<number | null>(null);
+  const [activeStep, setActiveStep] = React.useState<number>(0);
   const [progress, setProgress] = React.useState(0);
   const [newCounterName, setNewCounterName] = React.useState('');
   const [showNewCounter, setShowNewCounter] = React.useState(false);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { projects, updateProject } = useProject();
-  const id = searchParams.get('id');
-  const currentProject = projects.find(p => p.id === id);
+  const projectId = searchParams.get('id') || '';
+  const currentProject = projects.find(p => p.id === projectId);
   
   React.useEffect(() => {
-    if (currentProject && activeStep === null) {
+    if (currentProject) {
       setActiveStep(currentProject.currentStep);
       setProgress(currentProject.currentStep * (100 / (currentProject.steps.length - 1)));
     }
-  }, [currentProject, activeStep]);
+  }, [currentProject]);
 
   React.useEffect(() => {
     if (currentProject && currentProject.status !== 'På pinnene') {
@@ -40,16 +40,64 @@ export const ProjectGuide = () => {
       });
     }
   }, [currentProject, updateProject]);
-  const replaceStitchCounts = (text: string, stitchCounts?: Record<string, Record<string, number>>) => {
-    if (!stitchCounts || !currentProject?.selectedSize) return text;
+
+  const handleNext = () => {
+    if (currentProject && activeStep < currentProject.steps.length - 1) {
+      const nextStep = activeStep + 1;
+      setActiveStep(nextStep);
+      setProgress(nextStep * (100 / (currentProject.steps.length - 1)));
+      updateProject({
+        ...currentProject,
+        currentStep: nextStep
+      });
+    } else if (currentProject && activeStep === currentProject.steps.length - 1) {
+      updateProject({
+        ...currentProject,
+        status: 'Ferdig'
+      });
+      navigate(`/project/${currentProject.id}`);
+    }
+  };
+
+  const handleBack = () => {
+    if (currentProject && activeStep > 0) {
+      const prevStep = activeStep - 1;
+      setActiveStep(prevStep);
+      setProgress(prevStep * (100 / (currentProject.steps.length - 1)));
+      updateProject({
+        ...currentProject,
+        currentStep: prevStep
+      });
+    }
+  };
+
+  const replaceStitchCounts = (text: string, sizeSpecificValues?: Array<{
+    placeholder: string;
+    values: Record<string, number>;
+  }>, stitchCounts?: Record<string, Record<string, number>>) => {
+    if (!currentProject?.selectedSize) return text;
     
     let result = text;
-    Object.entries(stitchCounts).forEach(([name, counts]) => {
-      const count = counts[currentProject.selectedSize];
-      if (count !== undefined) {
-        result = result.replace(new RegExp(`\\[${name}\\]`, 'g'), count.toString());
-      }
-    });
+
+    // Handle imported pattern format (sizeSpecificValues)
+    if (sizeSpecificValues) {
+      sizeSpecificValues.forEach(({ placeholder, values }) => {
+        const value = values[currentProject.selectedSize];
+        if (value !== undefined) {
+          result = result.replace(placeholder, value.toString());
+        }
+      });
+    }
+
+    // Handle manually created pattern format (stitchCounts)
+    if (stitchCounts) {
+      Object.entries(stitchCounts).forEach(([name, counts]) => {
+        const count = counts[currentProject.selectedSize];
+        if (count !== undefined) {
+          result = result.replace(new RegExp(`\\[${name}\\]`, 'g'), count.toString());
+        }
+      });
+    }
     
     return result;
   };
@@ -66,52 +114,18 @@ export const ProjectGuide = () => {
   }
 
   const steps = currentProject.steps;
-  const currentStep = steps[activeStep ?? 0];
+  const currentStep = steps[activeStep];
 
   if (!currentStep) {
     return <div>Step not found</div>;
   }
-
-  const handleNext = () => {
-    if (activeStep < steps.length - 1) {
-      setActiveStep(prev => prev + 1);
-      const nextStep = activeStep + 1;
-      setProgress(nextStep * (100 / (steps.length - 1)));
-      if (currentProject) {
-        updateProject({
-          ...currentProject,
-          currentStep: nextStep
-        });
-      }
-    } else if (activeStep === steps.length - 1) {
-      updateProject({
-        ...currentProject,
-        status: 'Ferdig'
-      });
-      navigate(`/project/${currentProject.id}`);
-    }
-  };
-
-  const handleBack = () => {
-    if (activeStep > 0) {
-      setActiveStep(prev => prev - 1);
-      const prevStep = activeStep - 1;
-      setProgress(prevStep * (100 / (steps.length - 1)));
-      if (currentProject) {
-        updateProject({
-          ...currentProject,
-          currentStep: prevStep
-        });
-      }
-    }
-  };
 
   return (
     <div className="min-h-screen bg-[#fff7ff] p-4 sm:p-6 md:p-8">
       <div className="max-w-[640px] mx-auto">
         <button
           className="flex items-center gap-2 -ml-2 text-gray-600 hover:text-black mb-8"
-          onClick={() => navigate(`/project/${id}`)}
+          onClick={() => navigate(`/project/${projectId}`)}
         >
           <ChevronLeft className="w-4 h-4" />
           Tilbake til prosjekt
@@ -138,14 +152,14 @@ export const ProjectGuide = () => {
             <div
               key={index}
               className={`flex flex-col items-center gap-2 basis-1/2 sm:basis-auto sm:flex-1 ${
-                index === (activeStep ?? 0) ? 'opacity-100' : 'opacity-50'
+                index === activeStep ? 'opacity-100' : 'opacity-50'
               }`}
               onClick={() => setActiveStep(index)}
               style={{ cursor: 'pointer' }}
             >
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  index === (activeStep ?? 0)
+                  index === activeStep
                     ? 'bg-purple500-regular text-white'
                     : 'bg-gray-200 text-gray-600'
                 }`}
@@ -164,7 +178,7 @@ export const ProjectGuide = () => {
             {currentStep.title}
           </h3>
           <p className="text-gray-600 mb-6 whitespace-pre-wrap">
-            {replaceStitchCounts(currentStep.description, currentStep.stitchCounts)}
+            {replaceStitchCounts(currentStep.description, currentStep.sizeSpecificValues, currentStep.stitchCounts)}
           </p>
           
           {/* Counters section */}
@@ -178,11 +192,16 @@ export const ProjectGuide = () => {
                     size="icon"
                     className="h-8 w-8"
                     onClick={() => {
-                      const updatedProject = { ...currentProject };
-                      const counterIndex = updatedProject.steps[activeStep].counters?.findIndex(c => c.id === counter.id) ?? -1;
-                      if (counterIndex !== -1 && updatedProject.steps[activeStep].counters) {
-                        updatedProject.steps[activeStep].counters[counterIndex].value -= 1;
-                        updateProject(updatedProject);
+                      if (currentProject) {
+                        const updatedProject = { ...currentProject };
+                        const step = updatedProject.steps[activeStep];
+                        if (step && step.counters) {
+                          const counterIndex = step.counters.findIndex(c => c.id === counter.id);
+                          if (counterIndex !== -1) {
+                            step.counters[counterIndex].value -= 1;
+                            updateProject(updatedProject);
+                          }
+                        }
                       }
                     }}
                   >
@@ -194,11 +213,16 @@ export const ProjectGuide = () => {
                     size="icon"
                     className="h-8 w-8"
                     onClick={() => {
-                      const updatedProject = { ...currentProject };
-                      const counterIndex = updatedProject.steps[activeStep].counters?.findIndex(c => c.id === counter.id) ?? -1;
-                      if (counterIndex !== -1 && updatedProject.steps[activeStep].counters) {
-                        updatedProject.steps[activeStep].counters[counterIndex].value += 1;
-                        updateProject(updatedProject);
+                      if (currentProject) {
+                        const updatedProject = { ...currentProject };
+                        const step = updatedProject.steps[activeStep];
+                        if (step && step.counters) {
+                          const counterIndex = step.counters.findIndex(c => c.id === counter.id);
+                          if (counterIndex !== -1) {
+                            step.counters[counterIndex].value += 1;
+                            updateProject(updatedProject);
+                          }
+                        }
                       }
                     }}
                   >
@@ -286,7 +310,7 @@ export const ProjectGuide = () => {
         <div className="flex justify-between">
           <Button
             variant="outline"
-            disabled={(activeStep ?? 0) === 0}
+            disabled={activeStep === 0}
             onClick={handleBack}
           >
             <ArrowLeft className="w-4 h-4" />
@@ -296,7 +320,7 @@ export const ProjectGuide = () => {
             variant="default"
             onClick={handleNext}
           >
-            {(activeStep ?? 0) === steps.length - 1 ? 'Fullfør prosjekt' : 'Neste'}
+            {activeStep === steps.length - 1 ? 'Fullfør prosjekt' : 'Neste'}
             <ArrowRight className="w-4 h-4" />
           </Button>
         </div>

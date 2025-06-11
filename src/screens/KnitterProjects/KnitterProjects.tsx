@@ -1,4 +1,4 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Upload } from "lucide-react";
 import React, { useState } from "react";
 import {
   Accordion,
@@ -10,6 +10,8 @@ import { Card, CardContent } from "../../components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { useProject, Project } from "../../contexts/ProjectContext";
 import { defaultKnittingImage } from '../../constants';
+import { Button } from "../../components/ui/button";
+import { UploadPatternModal } from "../../components/UploadPatternModal";
 
 const groupProjectsByStatus = (projects: Project[]): Record<string, Project[]> => ({
   "På pinnene 🧶": [
@@ -65,49 +67,26 @@ export const KnitterProjects = (): JSX.Element => {
             </h3>
             <ArrowRight className="w-5 h-5" />
           </div>
-
-          <p className="font-text-base text-grey-900 text-[length:var(--text-base-font-size)] tracking-[var(--text-base-letter-spacing)] leading-[var(--text-base-line-height)] [font-style:var(--text-base-font-style)]">
-            {project.description}
-          </p>
-          
-          <div className="flex flex-wrap gap-2">
-            <Badge 
-              className="bg-[#ccc3ff] text-neutralsblack rounded-[100px] px-2 py-1 font-text-xs text-[length:var(--text-xs-font-size)] tracking-[var(--text-xs-letter-spacing)] leading-[var(--text-xs-line-height)] [font-style:var(--text-xs-font-style)]"
-            >
-              {project.status}
-            </Badge>
-            
-            <Badge 
-              className={`rounded-[100px] px-2 py-1 font-text-xs text-[length:var(--text-xs-font-size)] tracking-[var(--text-xs-letter-spacing)] leading-[var(--text-xs-line-height)] [font-style:var(--text-xs-font-style)] ${
-                project.difficulty === "Nybegynner" ? "bg-[#C7F7AE] text-neutralsblack" :
-                project.difficulty === "Middels" ? "bg-[#C8EBFD] text-neutralsblack" :
-                "bg-[#FEE9FE] text-neutralsblack"
-              }`}
-            >
-              {project.difficulty}
-            </Badge>
-            
-            {project.startedAt && (
-              <Badge 
-                className="bg-[#C8EBFD] text-neutralsblack rounded-[100px] px-2 py-1 font-text-xs text-[length:var(--text-xs-font-size)] tracking-[var(--text-xs-letter-spacing)] leading-[var(--text-xs-line-height)] [font-style:var(--text-xs-font-style)]"
-              >
-                Startet {new Date(project.startedAt).toLocaleDateString('no-NO', { day: 'numeric', month: 'long' })}
-              </Badge>
-            )}
-          </div>
         </div>
       </CardContent>
     </Card>
   );
 
   return (
-    <main className="bg-[#fff7ff] min-h-screen p-4 sm:p-6 md:p-8">
-      <div className="max-w-[640px] mx-auto">
-        <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6 mb-8 sm:mb-12">
-          <h1 className="font-text-5xl text-black text-[length:var(--text-5xl-font-size)] tracking-[var(--text-5xl-letter-spacing)] leading-[var(--text-5xl-line-height)] [font-style:var(--text-5xl-font-style)]">
-            Dine prosjekter 💜
-          </h1>
-        </header>
+    <main className="min-h-screen bg-[#fff7ff] p-4 sm:p-6 md:p-8">
+      <div className="max-w-screen-xl mx-auto">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+          <h1 className="font-text-5xl text-black">Mine strikkeprosjekter</h1>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => navigate('/create-recipe')}
+              variant="outline"
+            >
+              Lag ny oppskrift
+            </Button>
+            <UploadPatternModal />
+          </div>
+        </div>
 
         <section className="flex flex-col gap-6">
           {Object.entries(projectsData).map(([category, projects], index) => (

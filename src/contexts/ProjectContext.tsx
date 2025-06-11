@@ -50,37 +50,46 @@ const DEFAULT_PROJECTS: Omit<Project, 'id'>[] = [{
       title: 'Legg opp masker',
       description: 'Start med å legge opp 100 masker med pinner nr 4. Pass på at maskene ikke er for stramme.',
       videoUrl: 'https://www.youtube.com/watch?v=example1',
-      stitchCounts: {
-        'Halskant': {
-          'S (36-38)': 90,
-          'M (40-42)': 100,
-          'L (44-46)': 110
+      sizeSpecificValues: [
+        {
+          placeholder: 'Halskant',
+          values: {
+            'S (36-38)': 90,
+            'M (40-42)': 100,
+            'L (44-46)': 110
+          }
         }
-      }
+      ]
     },
     {
       title: 'Strikk vrangbord',
       description: 'Strikk 1 rett, 1 vrang i 5 cm for å lage en fin vrangbord nederst på genseren.',
       videoUrl: 'https://www.youtube.com/watch?v=example2',
-      stitchCounts: {
-        'Vrangbord': {
-          'S (36-38)': 90,
-          'M (40-42)': 100,
-          'L (44-46)': 110
+      sizeSpecificValues: [
+        {
+          placeholder: 'Vrangbord',
+          values: {
+            'S (36-38)': 90,
+            'M (40-42)': 100,
+            'L (44-46)': 110
+          }
         }
-      }
+      ]
     },
     {
       title: 'Strikk glattstrikk',
       description: 'Fortsett med glattstrikk (rett på retten, vrang på vrangen) til arbeidet måler 40 cm.',
       videoUrl: 'https://www.youtube.com/watch?v=example3',
-      stitchCounts: {
-        'Kropp': {
-          'S (36-38)': 90,
-          'M (40-42)': 100,
-          'L (44-46)': 110
+      sizeSpecificValues: [
+        {
+          placeholder: 'Kropp',
+          values: {
+            'S (36-38)': 90,
+            'M (40-42)': 100,
+            'L (44-46)': 110
+          }
         }
-      }
+      ]
     }
   ]
 }, {
@@ -128,37 +137,46 @@ const DEFAULT_PROJECTS: Omit<Project, 'id'>[] = [{
       title: 'Legg opp masker',
       description: 'Start med å legge opp [Ribbekant] masker på strømpepinner 3.5. Fordel maskene jevnt på pinnene.',
       videoUrl: 'https://www.youtube.com/watch?v=example4',
-      stitchCounts: {
-        'Ribbekant': {
-          'S (36-38)': 48,
-          'M (40-42)': 52,
-          'L (44-46)': 56
+      sizeSpecificValues: [
+        {
+          placeholder: 'Ribbekant',
+          values: {
+            'S (36-38)': 48,
+            'M (40-42)': 52,
+            'L (44-46)': 56
+          }
         }
-      }
+      ]
     },
     {
       title: 'Strikk ribb',
       description: 'Strikk 2 rett, 2 vrang i 5 cm for å lage en elastisk kant.',
       videoUrl: 'https://www.youtube.com/watch?v=example5',
-      stitchCounts: {
-        'Ribb': {
-          'S (36-38)': 48,
-          'M (40-42)': 52,
-          'L (44-46)': 56
+      sizeSpecificValues: [
+        {
+          placeholder: 'Ribb',
+          values: {
+            'S (36-38)': 48,
+            'M (40-42)': 52,
+            'L (44-46)': 56
+          }
         }
-      }
+      ]
     },
     {
       title: 'Start mønster',
       description: 'Bytt til strømpepinner 4 og start mønsteret. Følg diagrammet for flettene.',
       videoUrl: 'https://www.youtube.com/watch?v=example6',
-      stitchCounts: {
-        'Mønster': {
-          'S (36-38)': 48,
-          'M (40-42)': 52,
-          'L (44-46)': 56
+      sizeSpecificValues: [
+        {
+          placeholder: 'Mønster',
+          values: {
+            'S (36-38)': 48,
+            'M (40-42)': 52,
+            'L (44-46)': 56
+          }
         }
-      }
+      ]
     }
   ]
 }];
@@ -166,15 +184,11 @@ const DEFAULT_PROJECTS: Omit<Project, 'id'>[] = [{
 export interface Project {
   id: string;
   title: string;
-  isPublished?: boolean;
-  image?: string;
   description: string;
+  image?: string;
   difficulty: 'Nybegynner' | 'Middels' | 'Avansert';
   availableSizes: string[];
   selectedSize: string;
-  gauge: string;
-  status: string;
-  currentStep: number;
   bustWidth: Record<string, number>;
   length: Record<string, number>;
   tension: string;
@@ -186,21 +200,25 @@ export interface Project {
     type: string;
   };
   techniques: string[];
+  gauge: string;
+  status: 'Ikke påbegynt' | 'På pinnene' | 'Ferdig';
+  currentStep: number;
+  isPublished?: boolean;
   steps: {
     title: string;
     description: string;
     videoUrl?: string;
-    stitchCounts?: Record<string, Record<string, number>>;
-    counters?: {
+    sizeSpecificValues: Array<{
+      placeholder: string;
+      values: Record<string, number>;
+    }>;
+    counters?: Array<{
       id: string;
       name: string;
       value: number;
-    }[];
+    }>;
+    stitchCounts?: Record<string, Record<string, number>>;
   }[];
-  originalFile?: {
-    type: string;
-    url: string;
-  };
 }
 
 interface ProjectContextType {

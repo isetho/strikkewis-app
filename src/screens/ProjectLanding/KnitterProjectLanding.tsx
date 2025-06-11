@@ -1,7 +1,18 @@
 import React from 'react';
-import { ChevronLeft, ChevronDown } from 'lucide-react';
+import { ChevronLeft, ChevronDown, Trash2 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "../../components/ui/alert-dialog";
 import { useNavigate } from 'react-router-dom';
 import { Project, useProject } from '../../contexts/ProjectContext';
 import { defaultKnittingImage } from '../../constants';
@@ -21,13 +32,44 @@ const statusOptions = ['På pinnene', 'Ikke påbegynt', 'Ferdig'] as const;
 
 export const KnitterProjectLanding = ({ project }: Props) => {
   const navigate = useNavigate();
-  const { updateProject } = useProject();
+  const { updateProject, deleteProject } = useProject();
 
   const handleSizeSelect = (size: string) => {
     updateProject({
       ...project,
       selectedSize: size
     });
+  };
+
+  const replaceStitchCounts = (text: string, sizeSpecificValues?: Array<{
+    placeholder: string;
+    values: Record<string, number>;
+  }>, stitchCounts?: Record<string, Record<string, number>>) => {
+    if (!project.selectedSize) return text;
+    
+    let result = text;
+
+    // Handle imported pattern format (sizeSpecificValues)
+    if (sizeSpecificValues) {
+      sizeSpecificValues.forEach(({ placeholder, values }) => {
+        const value = values[project.selectedSize];
+        if (value !== undefined) {
+          result = result.replace(placeholder, value.toString());
+        }
+      });
+    }
+
+    // Handle manually created pattern format (stitchCounts)
+    if (stitchCounts) {
+      Object.entries(stitchCounts).forEach(([name, counts]) => {
+        const count = counts[project.selectedSize];
+        if (count !== undefined) {
+          result = result.replace(new RegExp(`\\[${name}\\]`, 'g'), count.toString());
+        }
+      });
+    }
+    
+    return result;
   };
 
   return (
@@ -50,7 +92,7 @@ export const KnitterProjectLanding = ({ project }: Props) => {
         </div>
 
         <div className="flex flex-col sm:flex-row items-start justify-between gap-4 sm:gap-6 mb-8">
-          <h1 className="font-text-5xl text-black">{project.title}</h1>
+          
           <div className="flex w-full sm:w-auto gap-2">
             <div className="relative">
               <select
@@ -84,29 +126,7 @@ export const KnitterProjectLanding = ({ project }: Props) => {
 
         <div className="bg-[#FFFFF0] rounded-xl p-8 space-y-8">
           <div>
-            <h2 className="font-text-xl text-black mb-4">Om prosjektet</h2>
-            <p className="text-gray-600">{project.description}</p>
-          </div>
-          
-          <div className="flex flex-wrap gap-2">
-            <Badge 
-              className={`rounded-[100px] px-2 py-1 ${
-                project.difficulty === "Nybegynner" ? "bg-[#C7F7AE]" :
-                project.difficulty === "Middels" ? "bg-[#C8EBFD]" :
-                "bg-[#FEE9FE]"
-              } text-neutralsblack`}
-            >
-              {project.difficulty}
-            </Badge>
-            
-            <Badge 
-              className="bg-[#ccc3ff] text-neutralsblack rounded-[100px] px-2 py-1"
-            >
-              {project.status}
-            </Badge>
-          </div>
-
-          <div>
+          <h1 className="font-text-5xl text-black mb-4">{project.title}</h1>
             <h2 className="font-text-xl text-black mb-4">Velg størrelse</h2>
             <div className="grid grid-cols-2 gap-2">
               {project.availableSizes.map((size) => (
@@ -144,13 +164,8 @@ export const KnitterProjectLanding = ({ project }: Props) => {
                 label="Pinner"
                 value={project.suggestedNeedles?.length ? project.suggestedNeedles.join(', ') : null}
               />
-              <SpecificationRow 
-                label="Teknikker"
-                value={project.techniques?.length ? project.techniques.join(', ') : null}
-              />
-              
               {project.selectedSize && (
-                <div className="pt-4 mt-4 border-t border-gray-200">
+                <div className="mt-4">
                   <h3 className="font-medium mb-4">Mål for størrelse {project.selectedSize}</h3>
                   <div className="space-y-2">
                     <SpecificationRow 
@@ -181,14 +196,44 @@ export const KnitterProjectLanding = ({ project }: Props) => {
                   </div>
                   <h3 className="font-text-base mb-2">{step.title}</h3>
                   <p className="text-gray-600 text-sm line-clamp-2">
-                    {Object.entries(step.stitchCounts || {}).reduce((text, [name, counts]) => {
-                      const count = project.selectedSize && counts[project.selectedSize];
-                      return text.replace(new RegExp(`\\[${name}\\]`, 'g'), count?.toString() || `[${name}]`);
-                    }, step.description)}
+                    {replaceStitchCounts(step.description, step.sizeSpecificValues, step.stitchCounts)}
                   </p>
                 </div>
               ))}
             </div>
+          </div>
+
+          <div>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  className="w-full sm:w-auto"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Fjern oppskrift
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Er du sikker?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Dette vil permanent fjerne oppskriften fra dine prosjekter. Denne handlingen kan ikke angres.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => {
+                      deleteProject(project.id);
+                      navigate('/knitter-projects');
+                    }}
+                  >
+                    Fjern
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
       </div>
